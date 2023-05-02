@@ -1,8 +1,8 @@
 _your zenodo badge here_
 
-# lastname-etal_year_journal
+# li_et-al_natcom_2023
 
-**A long-term global energy-economic model of carbon dioxide release from fossil fuel use**
+**The Influence of Climate Change on the Severe Flooding from Remnants of Hurricane Ida 2021**
 
 Jae Edmonds<sup>1\*</sup> and John Reilly<sup>1</sup>
 
@@ -11,10 +11,11 @@ Jae Edmonds<sup>1\*</sup> and John Reilly<sup>1</sup>
 \* corresponding author:  email@myorg.gov
 
 ## Abstract
-In this paper the authors develop a long-term global energy-economic model which is capable of assessing alternative energy evolutions over periods of up to 100 years. The authors have sought to construct the model so that it can perform its assigned task with as simple a modelling system as possible. The model structure is fully documented and a brief summary of results is given.
+Previous research has demonstrated that there will be increases tropical cyclone related precipitation and flooding in a future climate, due the increased capacity of a warmer atmosphere to hold moisture. The remnants of Hurricane Ida in 2021 brought record rainfall and deadly flooding to the Northeastern United States. Our work aims to quantify the contribution of climate change to this flood event and its impact on human society. We applied an end-to-end analysis framework that combines lessons from climate change attribution science, two-dimensional hydrodynamic modeling, and flood impact evaluation for past (locally 1°C cooler) and future (locally 1°C warmer) climate scenarios. The results show that climate change contribution to flood intensity is generally half of that to precipitation for this area. We estimate that a quarter to a half million more people will be exposed to flood water due as a consequence of climate change. More impacts were seen with deeper flood water depth (>= 1 m). Socially vulnerable populations were found to be disproportionately affected, and climate change exacerbates this inequality.
+
 
 ## Journal reference
-Edmonds, J., & Reilly, J. (1983). A long-term global energy-economic model of carbon dioxide release from fossil fuel use. Energy Economics, 5(2), 74-88. DOI: https://doi.org/10.1016/0140-9883(83)90014-2
+TBD
 
 ## Code reference
 References for each minted software release for all code involved.  
