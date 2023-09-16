@@ -1,1 +1,2 @@
-## This is the directory to place scripts or instructions in for recreating the figures that are represented in your publication
+## Figures
+This folder contains all (sub)figures in the main text and supplementary document, genertated by [plot_table.R](./plot_table.R).
