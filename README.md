@@ -17,7 +17,7 @@ Previous research has demonstrated that tropical cyclone-related precipitation a
 
 
 ## Journal reference
-TBD
+Li, X., M.F. Wehner, D.R. Judi, & R.D. Hetland. The Influence of Climate Change on Flooding and Social Inequalities from Remnants of Hurricane Ida. _Nature Communications_. submitted.
 
 <!-- ## Code reference
 References for each minted software release for all code involved.  
