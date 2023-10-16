@@ -118,5 +118,12 @@ Climate change contributions to flood characteristics for the past 14% scenario 
 Flood impacts and climate change contribution at different impact levels. Flood impacts were presented from (a) area of developed land and (b) population exposed to floodwater exceeding specific depth thresholds. One ft is approximately 0.3 m.  
 ![](./figures/impact_depth.png)
 
-Social inequality of flood exposure and the role of climate change. Data were summarised for people exposed to deeper than 0.5 ft (≈ 0.15m, a) and 3 ft (≈ 1m, b) of floodwater. Inequality was presented through concentration curves of population against vulnerability (left) and tables specifying concentration and SII values in different cases (right). Dash lines indicate theoretical uniform exposure.
-![](./figures/svi_ssi.png)
+Illustration of concentration curves and social inequality indices. Panel a illustrates the concept of the designed indices, and panel b shows data derived from the present scenario analysis for people exposed to different levels of floodwater.
+|<div style="width:290px"> </div>|<div style="width:290px"> </div>|<div style="width:290px"> </div>|
+| --- | --- |--- |
+|![](./figures/sii_example.png)|![](./figures/sii_present.png)||
+
+Social inequality of flood exposure and the role of climate change. Both the absolute (a) and relative (b) social inequality indices are included. Data were summarised for people exposed to deeper than 0.5 ft (≈ 0.15m, light blue) and 3 ft (≈ 1m, dark blue) of floodwater.
+|<div style="width:290px"> </div>|<div style="width:290px"> </div>|<div style="width:290px"> </div>|
+| --- | --- |--- |
+|![](./figures/siia_climate.png)|![](./figures/siir_climate.png)||
