@@ -317,7 +317,25 @@ ggarrange(p_nlcd_depth, p_pop_depth, ncol=2, nrow=1, common.legend = TRUE, legen
 ggsave(path(plot_folder,'impact_depth.png'),w=6,h=3)
 
 #SVI
+# Figure 4(a)
+# Make up data for graphical illustration of social inequality index
+df_example = tibble(
+  reference = c(0,0.5,0.75,0.9,1),
+  exposed = c(0,0.1,0.25,0.5,1),
+  s = c(0,0.25,0.5,0.75,1))
+ggplot(df_example,aes(x=s))+
+  geom_area(aes(y=reference),color='grey30',fill='grey30',alpha=0.3)+
+  annotate("text",label='Reference population',x=0.375,y=0.675,color='grey30',angle=45,vjust=-1)+
+  geom_area(aes(y=s),linetype=2,color='black',fill='grey30',alpha=0.3)+
+  annotate("text",label='Uniform exposure',x=0.5,y=0.5,angle=45,vjust=-1)+
+  geom_area(aes(y=exposed),color='dodgerblue4',fill='dodgerblue1')+
+  annotate("text",label='Exposed population',x=0.675,y=0.375,color='dodgerblue4',angle=45,vjust=1)+
+  coord_fixed()+
+  annotate("text",x=0,y=1,label='(a)',hjust=0,vjust=1)+
+  labs(x='Social Vulnerability Score (s)',y='Cumulative Share of Population')
+ggsave(path(plot_folder,'sii_example.png'),w=3,h=3)
 
+# Data from this experiment
 # background
 svi_bg_df = read_csv(path(base_folder,"data/impact/population/svi_bg.csv"))%>%
   mutate(svi=factor(svi,levels=c("Lowest","Medium_low","Medium_high","Highest")))
@@ -335,26 +353,49 @@ svi_huc = svi_df %>% group_by(`...1`) %>%
 
 svi_all = svi_df %>%
   group_by(svi,version,threshold) %>% summarise(pop=sum(pop)) %>% ungroup %>%
-  group_by(version,threshold) %>% mutate(pct=pop/sum(pop)*100) %>% ungroup
-
-svi_present = svi_all %>% filter(version=='present') %>% mutate(baseline=pop)
-svi_climate_change = svi_all%>% filter(version!='present')%>%
-  left_join(dplyr::select(svi_present,c(svi,threshold,baseline))) %>%
-  group_by(version,threshold) %>%
-  mutate(pop_delta = abs(pop-baseline), pct_delta = pop_delta/sum(pop_delta)*100) %>% ungroup
-# svi_climate_change
-
-# reorganize data for plotting
-svi_data_plot = svi_climate_change %>% transmute(svi,version,threshold,pop=pop_delta,pct=pct_delta) %>%
-  bind_rows(dplyr::select(svi_present,-baseline)) %>%
+  group_by(version,threshold) %>% mutate(pct=pop/sum(pop)*100) %>% ungroup %>%
   bind_rows(add_column(svi_bg_all,version="background",threshold=0))
-# svi_data_plot
+
+# Prepare concentration curves
+pct2cump = function(df,v,th){
+  c(0,df%>%filter(version==v&threshold==th)%>%pull(pct)%>%cumsum)/100
+}
+
+version_threshold = svi_all %>% transmute(version,threshold) %>% unique()
+
+cc_all = foreach(i=1:nrow(version_threshold),.combine=bind_rows)%do%{
+  version=version_threshold$version[i]
+  threshold=version_threshold$threshold[i]
+  tibble(svi=c(0,0.25,0.5,0.75,1),
+         version=version,
+         threshold=threshold,
+         cc=pct2cump(svi_all,version,threshold))
+}
+
+# Figure 4(b)
+# Make up data for graphical illustration of social inequality index
+cc_bg = cc_all %>% filter(version=='background')
+cc_present_0p5 = cc_all %>% filter(version=='present'&threshold==0.5)
+cc_present_3 = cc_all %>% filter(version=='present'&threshold==3)
+ggplot(cc_bg,aes(x=svi))+
+  geom_line(aes(y=cc,color='grey30'))+
+  geom_line(aes(y=cc_present_0p5$cc,color='dodgerblue1'))+
+  geom_line(aes(y=cc_present_3$cc,color='dodgerblue4'))+
+  geom_line(aes(y=svi),linetype=2)+
+  annotate("text",x=0,y=1,label='(b)',hjust=0,vjust=1)+
+  coord_fixed()+
+  labs(x='Social Vulnerability Score (s)',y='Cumulative Share of Population')+
+  scale_color_manual(name=element_blank(),guide='legend',
+                     values=c('dodgerblue1'='dodgerblue1','dodgerblue4'='dodgerblue4','grey30'='grey30'),
+                     labels=c('Ex. > 0.5ft','Ex. > 3ft','Background'))+ 
+  theme(legend.position=c(0.75,0.2),legend.background=element_rect(fill="transparent"))
+ggsave(path(plot_folder,'sii_present.png'),w=3,h=3)
 
 # inequality index
 auc = function(data){
   area = 0
   last = 0
-  for(d in data){
+  for(d in data[-1]){
     sub_area = 0.25*(last+d)/2
     area = area + sub_area
     last = d
@@ -363,89 +404,52 @@ auc = function(data){
 }
 
 inequality_relative = function(data,ref){
-  ref_auc = ref %>% cumsum %>% auc
-  data_auc = data %>% cumsum %>% auc
+  ref_auc = ref %>% auc
+  data_auc = data %>% auc
   output = (ref_auc-data_auc)/ref_auc
   return(output)
 }
 
 inequality_absolute = function(data){
-  data_auc = data %>% cumsum %>% auc
-  output = 1-2*data_auc/100
+  data_auc = data %>% auc
+  output = 1-2*data_auc
   return(output)
 }
 
 # SII_absolute of background population
-ref = svi_data_plot %>% filter(version=='background') %>% pull(pct)
+ref = cc_all %>% filter(version=='background') %>% pull(cc)
 inequality_absolute(ref)
 
-calcSII = function(data,depth,ref){
-  foreach(v=unique(data$version),.combine=bind_rows)%do%{
-    if (v=='background') df = data %>% filter(version==v) %>% pull(pct)
-    else df = data %>% filter(version==v&threshold==depth) %>% pull(pct)
-    SII_a = inequality_absolute(df) %>% round(3)
-    SII_r = inequality_relative(df,ref)%>% round(3)
-    return(tibble(version=v,SII_a,SII_r))
+# SII of population exposed to flood in each scenario
+sii_all = foreach(i=1:nrow(version_threshold),.combine=bind_rows)%do%{
+  v=version_threshold$version[i]
+  depth=version_threshold$threshold[i]
+  if (v!='background'){
+    df = cc_all %>% filter(version==v&threshold==depth) %>% pull(cc)
+    SII_a = inequality_absolute(df)
+    SII_r = inequality_relative(df,ref)
+    return(tibble(version=v,threshold=depth,SII_a,SII_r))
   }
-}
-
-version_lbl = c('background'='Background','present'='Present','p7'='\u0394 Past 7%','p14'='\u0394 Past 14%',
-                'f7'='\u0394 Future 7%','f14'='\u0394 Future 14%')
-
-# Prepare SVI_SII table for figure 5
-prepSVItbl = function(df,depth,ref,subtitle){
-  tbl_theme = ttheme(base_style = "light",base_size = 9,padding = unit(c(1, 2), "mm"))
-  df_sii = calcSII(df,depth,ref)
-  df %>% filter(threshold==depth|threshold==0) %>% 
-    transmute(svi,Scenario=version,pct=round(pct,2)) %>%
-    pivot_wider(names_from=svi,values_from=pct)%>%
-    left_join(df_sii,by=c('Scenario'='version'))%>%
-    transmute(Scenario=version_lbl[Scenario],`%Least`=Lowest,`%Less`=Medium_low,`%More`=Medium_high,`%Most`=Highest,SII_a,SII_r) %>%
-    ggtexttable(rows = NULL,theme = tbl_theme) %>%
-    tab_add_title(text = subtitle, face = "bold")
-}
-plot_df_05 = prepSVItbl(svi_data_plot,0.5,ref,"All flood exposure")
-plot_df_3 = prepSVItbl(svi_data_plot,3,ref,"Deep flood exposure")
-
-# Prepare concentration curves for figure 5
-pct2cump = function(df,v,th){
-  c(0,df%>%filter(version==v&threshold==th)%>%pull(pct)%>%cumsum)/100
-}
-concentrationCurve = function(df,threshold){
-  tibble(svi=c(0,0.25,0.5,0.75,1),
-         background=pct2cump(df,'background',0),
-         present=pct2cump(df,'present',threshold),
-         p7=pct2cump(df,'p7',threshold),
-         p14=pct2cump(df,'p14',threshold),
-         f7=pct2cump(df,'f7',threshold),
-         f14=pct2cump(df,'f14',threshold),
-  ) %>% pivot_longer(!svi) %>%
-    mutate(name=factor(name,levels=c('background','present','p7','p14','f7','f14')))
-}
-plotSII = function(df,title){
-  version_col = c('background'='grey30','present'='grey50','p7'='dodgerblue1','p14'='dodgerblue4','f7'='coral1','f14'='coral4')
-  version_lbl = c('background'='Background','present'='Present','p7'='\u0394 Past 7%','p14'='\u0394 Past 14%',
-                  'f7'='\u0394 Future 7%','f14'='\u0394 Future 14%')
-  ggplot(df)+
-    geom_line(aes(x=svi,y=value,color=name,group=name))+
-    geom_segment(aes(x=0,y=0,xend=1,yend=1),linetype=2)+
-    annotate("text",label=title,x=0,y=1,hjust=0)+
-    labs(x='SVI',y='Cumulative proportion',color='Scenario')+
-    scale_color_manual(values=version_col,labels=version_lbl)
-}
-
-df_concentration_05 = concentrationCurve(svi_data_plot,0.5)
-df_concentration_3 = concentrationCurve(svi_data_plot,3)
+}%>%
+  mutate(version=factor(version,levels=c('p14','p7','present','f7','f14')))
 
 # Figure 5
-plot_ssi_05 = plotSII(df_concentration_05,'(a)')
-plot_ssi_3 = plotSII(df_concentration_3,'(b)')
-plot_ssi = ggarrange(plot_ssi_05, plot_df_05, plot_ssi_3, plot_df_3, 
-                     ncol=2, nrow=2,widths = c(2, 3), 
-                     common.legend = TRUE, legend="bottom",align='h')
-plot_ssi
-# ggarrange(plot_svi, plot_ssi, ncol=1, nrow=2,heights=c(3,4))
-ggsave(path(plot_folder,'svi_ssi.png'),w=6,h=5)
+sii_0p5 = sii_all %>% filter(threshold==0.5)
+sii_3 = sii_all %>% filter(threshold==3)
+version_lbl = c('present'='Present','p7'='Past\n7%','p14'='Past\n14%',
+                'f7'='Future\n7%','f14'='Future\n14%')
+ggplot(sii_0p5)+
+  geom_point(aes(x=version,y=SII_r,color='dodgerblue1'))+
+  geom_line(aes(x=version,y=SII_r,group=threshold,color='dodgerblue1'))+
+  geom_point(data=sii_3,aes(x=version,y=SII_r,color='dodgerblue4'))+
+  geom_line(data=sii_3,aes(x=version,y=SII_r,group=threshold,color='dodgerblue4'))+
+  scale_x_discrete(labels=version_lbl)+
+  labs(x='Climate scenarios',y='SII_relative')+
+  scale_color_manual(name=element_blank(),guide='legend',
+                     values=c('dodgerblue1'='dodgerblue1','dodgerblue4'='dodgerblue4'),
+                     labels=c('Ex. > 0.5ft','Ex. > 3ft','Background'))+ 
+  theme(legend.position=c(0.75,0.5),legend.background=element_rect(fill="transparent"))
+ggsave(path(plot_folder,'sii_climate.png'),w=3,h=3)
 
 ################################################################
 # Validation
